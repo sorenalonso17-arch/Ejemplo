@@ -1,0 +1,2588 @@
+<html lang="es"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Dashboard de Llamadas - Disponible NO productivo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --info-color: #9b59b6;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --border-radius: 10px;
+            --box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .dashboard-header h1 {
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            font-size: 28px;
+        }
+
+        .dashboard-header .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+            border-left: 5px solid var(--primary-color);
+            text-align: center;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .metric-card.abandoned {
+            border-left-color: var(--danger-color);
+        }
+
+        .metric-card.attended {
+            border-left-color: var(--success-color);
+        }
+
+        .metric-card.aht {
+            border-left-color: var(--info-color);
+        }
+
+        .metric-icon {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .metric-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--secondary-color);
+            margin: 10px 0;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--box-shadow);
+            position: relative;
+            height: 350px;
+            overflow: hidden;
+        }
+
+        .chart-container h3 {
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            margin: 0 auto;
+        }
+
+        .chart-wrapper canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: linear-gradient(135deg, var(--primary-color), #2980b9);
+            color: white;
+        }
+
+        th {
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #eee;
+            transition: var(--transition);
+        }
+
+        tbody tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        .hora-cell {
+            font-weight: 600;
+            color: var(--primary-color);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        .total-cell {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: var(--secondary-color);
+            border-top: 2px solid var(--primary-color);
+        }
+
+        .high-abandon {
+            color: var(--danger-color);
+            font-weight: bold;
+            background-color: rgba(231, 76, 60, 0.1);
+            border-radius: 4px;
+            padding: 5px 10px !important;
+        }
+
+        .medium-abandon {
+            color: var(--warning-color);
+            font-weight: 600;
+            background-color: rgba(243, 156, 18, 0.1);
+            border-radius: 4px;
+            padding: 5px 10px !important;
+        }
+
+        .agents-section {
+            margin-top: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .section-header h2 {
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+        }
+
+        .agent-count {
+            background: var(--primary-color);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .agent-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+            border: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border-color: var(--primary-color);
+        }
+
+        .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .agent-avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color), #9b59b6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .agent-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .agent-info h4 {
+            margin: 0 0 8px 0;
+            color: var(--secondary-color);
+            font-size: 18px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .productivity-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .bg-success { 
+            background-color: rgba(46, 204, 113, 0.15); 
+            color: #27ae60; 
+            border: 1px solid #2ecc71;
+        }
+        .bg-warning { 
+            background-color: rgba(243, 156, 18, 0.15); 
+            color: #d35400; 
+            border: 1px solid #f39c12;
+        }
+        .bg-danger { 
+            background-color: rgba(231, 76, 60, 0.15); 
+            color: #c0392b; 
+            border: 1px solid #e74c3c;
+        }
+
+        .productivity-meter {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .meter-label {
+            font-size: 15px;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .meter-bar {
+            height: 10px;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .meter-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #3498db);
+            border-radius: 5px;
+            transition: width 1s ease;
+        }
+
+        .meter-details {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        .meter-note {
+            font-size: 11px;
+            color: #7f8c8d;
+            margin-top: 5px;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .agent-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+            flex: 1;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #ddd;
+            transition: var(--transition);
+        }
+
+        .stat-item:hover {
+            background-color: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .stat-item-productive {
+            border-left-color: var(--success-color);
+            background-color: rgba(46, 204, 113, 0.08);
+        }
+
+        .stat-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .stat-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .stat-name {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 4px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stat-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--secondary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-percent {
+            font-size: 11px;
+            color: #7f8c8d;
+            background: rgba(0,0,0,0.05);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .agent-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            font-size: 13px;
+        }
+
+        .footer-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .footer-label {
+            display: block;
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .footer-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        .agent-summary {
+            margin-top: 10px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            right: 25px;
+            top: 20px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .close:hover {
+            color: var(--danger-color);
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .modal-header h3 {
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .call-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .call-detail-card {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid var(--danger-color);
+            transition: var(--transition);
+        }
+
+        .call-detail-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .call-detail-item {
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .call-detail-label {
+            font-weight: 600;
+            color: var(--secondary-color);
+            font-size: 13px;
+            min-width: 80px;
+        }
+
+        .call-detail-value {
+            color: #666;
+            font-size: 13px;
+            text-align: right;
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .abandonadas-click {
+            cursor: pointer;
+            color: var(--danger-color);
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: var(--transition);
+            display: inline-block;
+        }
+
+        .abandonadas-click:hover {
+            background-color: rgba(231, 76, 60, 0.1);
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 300px;
+                padding: 15px;
+            }
+            
+            .chart-wrapper {
+                height: 200px;
+            }
+            
+            .agents-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .agent-card {
+                padding: 20px;
+            }
+            
+            .agent-stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            th, td {
+                padding: 10px 8px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .dashboard-header {
+                padding: 15px;
+            }
+            
+            .dashboard-header h1 {
+                font-size: 22px;
+            }
+            
+            .metric-value {
+                font-size: 28px;
+            }
+        }
+
+        .stat-item[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark-color);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 10;
+            margin-bottom: 5px;
+            pointer-events: none;
+        }
+
+        .stat-item[title]:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: var(--dark-color);
+            margin-bottom: -5px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .info-box h4 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            color: #555;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <h1><i class="fas fa-headset"></i> Dashboard de Llamadas En vivo y Productividad</h1>
+            
+        </header>
+
+        
+        
+
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-phone-volume"></i></div>
+                <div class="metric-value">126</div>
+                <div class="metric-label">Total Llamadas</div>
+            </div>
+            <div class="metric-card attended">
+                <div class="metric-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="metric-value">119</div>
+                <div class="metric-label">Llamadas Atendidas</div>
+            </div>
+            <div class="metric-card abandoned" onclick="mostrarAbandonadasGeneral()" style="cursor: pointer;">
+                <div class="metric-icon"><i class="fas fa-phone-slash"></i></div>
+                <div class="metric-value abandonadas-click">7</div>
+                <div class="metric-label">Llamadas Abandonadas</div>
+            </div>
+            <div class="metric-card aht">
+                <div class="metric-icon"><i class="fas fa-clock"></i></div>
+                <div class="metric-value">00:13:14</div>
+                <div class="metric-label">Tiempo Medio (AHT)</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="metric-value">5.6%</div>
+                <div class="metric-label">Tasa de Abandono</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-section">
+            <div class="chart-container">
+                <h3><i class="fas fa-chart-pie"></i> Distribución de Llamadas</h3>
+                <div class="chart-wrapper">
+                    <canvas id="pieChart" width="750" height="250" style="display: block; box-sizing: border-box; height: 250px; width: 750px;"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3><i class="fas fa-chart-bar"></i> Llamadas por Hora</h3>
+                <div class="chart-wrapper">
+                    <canvas id="barChart" width="750" height="250" style="display: block; box-sizing: border-box; height: 250px; width: 750px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-clock"></i> HORA</th>
+                        <th><i class="fas fa-sign-in-alt"></i> ENTRANTES</th>
+                        <th><i class="fas fa-check"></i> CONTESTADAS</th>
+                        <th><i class="fas fa-times"></i> ABANDONADAS</th>
+                        <th><i class="fas fa-percentage"></i> % ABANDONO</th>
+                        <th><i class="fas fa-stopwatch"></i> AHT</th>
+                        <th><i class="fas fa-users"></i> AGENTES EN COLA</th>
+                    </tr>
+                </thead>
+                <tbody><tr><td class="hora-cell">8</td><td>2</td><td>2</td><td><span class="abandonadas-click" onclick="mostrarAbandonadasPorHora(8)">0</span></td><td class="">0.0%</td><td>00:15:06</td><td>3</td></tr><tr><td class="hora-cell">9</td><td>10</td><td>10</td><td><span class="abandonadas-click" onclick="mostrarAbandonadasPorHora(9)">0</span></td><td class="">0.0%</td><td>00:12:49</td><td>6</td></tr><tr><td class="hora-cell">10</td><td>12</td><td>11</td><td><span class="abandonadas-click" onclick="mostrarAbandonadasPorHora(10)">1</span></td><td class="">8.3%</td><td>00:12:05</td><td>12</td></tr><tr><td class="hora-cell">11</td><td>20</td><td>19</td><td><span class="abandonadas-click" onclick="mostrarAbandonadasPorHora(11)">1</span></td><td class="">5.0%</td><td>00:10:15</td><td>12</td></tr><tr><td class="hora-cell">12</td><td>12</td><td>12</td><td><span class="abandonadas-click" onclick="mostrarAbandonadasPorHora(12)">0</span></td><td class="">0.0%</td><td>00:08:47</td><td>13</td></tr><tr><td class="hora-cell">13</td><td>16</td><td>15</td><td><span class="abandonadas-click" onclick="mostrarAbandonadasPorHora(13)">1</span></td><td class="">6.2%</td><td>00:17:19</td><td>12</td></tr><tr><td class="hora-cell">14</td><td>12</td><td>11</td><td><span class="abandonadas-click" onclick="mostrarAbandonadasPorHora(14)">1</span></td><td class="">8.3%</td><td>00:14:15</td><td>12</td></tr><tr><td class="hora-cell">15</td><td>4</td><td>4</td><td><span class="abandonadas-click" onclick="mostrarAbandonadasPorHora(15)">0</span></td><td class="">0.0%</td><td>00:07:20</td><td>13</td></tr><tr><td class="hora-cell">16</td><td>13</td><td>12</td><td><span class="abandonadas-click" onclick="mostrarAbandonadasPorHora(16)">1</span></td><td class="">7.7%</td><td>00:12:26</td><td>12</td></tr><tr><td class="hora-cell">17</td><td>12</td><td>12</td><td><span class="abandonadas-click" onclick="mostrarAbandonadasPorHora(17)">0</span></td><td class="">0.0%</td><td>00:20:06</td><td>10</td></tr><tr><td class="hora-cell">18</td><td>8</td><td>8</td><td><span class="abandonadas-click" onclick="mostrarAbandonadasPorHora(18)">0</span></td><td class="">0.0%</td><td>00:15:12</td><td>9</td></tr><tr><td class="hora-cell">19</td><td>5</td><td>3</td><td><span class="abandonadas-click" onclick="mostrarAbandonadasPorHora(19)">2</span></td><td class="high-abandon">40.0%</td><td>00:08:49</td><td>6</td></tr><tr><td class="total-cell">TOTAL</td><td>126</td><td>119</td><td class="total-cell">7</td><td class="">5.6%</td><td>00:13:14</td></tr></tbody>
+            </table>
+        </div>
+
+        <!-- Agents Section -->
+        <section class="agents-section">
+            <div class="section-header">
+                <h2><i class="fas fa-users-cog"></i> Estado de Agentes</h2>
+                <div class="agent-count">15 agentes</div>
+            </div>
+            <div class="agents-grid">
+                
+    <div class="agent-card">
+        <div class="agent-header">
+            <div class="agent-avatar">A</div>
+            <div class="agent-info">
+                <h4>Alan Arturo Alvarez Chavaro</h4>
+                <span class="productivity-badge bg-warning">Media</span>
+            </div>
+        </div>
+        
+        <div class="productivity-meter">
+            <div class="meter-label">
+                <strong>Productividad: 78.0%</strong>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: 78.04725862022191%"></div>
+            </div>
+            <div class="meter-details">
+                <small>
+                    📋 Adm: 02:32:14 | 
+                    🔄 Cola: 05:27:15
+                </small>
+            </div>
+            <div class="meter-note" style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Solo Admin y En cola son productivos
+            </div>
+        </div>
+        
+        <div class="agent-stats-grid">
+    
+        <div class="stat-item stat-item-productive" title="Disponible para llamadas (Productivo)">
+            <div class="stat-icon" style="color: #2ecc71">🔄</div>
+            <div class="stat-details">
+                <div class="stat-name">En la cola</div>
+                <div class="stat-value">
+                    05:27:15 
+                    <span class="stat-percent">(53.3%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Tareas administrativas (Productivo)">
+            <div class="stat-icon" style="color: #3498db">📋</div>
+            <div class="stat-details">
+                <div class="stat-name">Administrativo</div>
+                <div class="stat-value">
+                    02:32:14 
+                    <span class="stat-percent">(24.8%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Disponible fuera de cola (No productivo)">
+            <div class="stat-icon" style="color: #95a5a6">✅</div>
+            <div class="stat-details">
+                <div class="stat-name">Disponible</div>
+                <div class="stat-value">
+                    01:09:34 
+                    <span class="stat-percent">(11.3%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso para comer (No productivo)">
+            <div class="stat-icon" style="color: #e67e22">🍴</div>
+            <div class="stat-details">
+                <div class="stat-name">Comida</div>
+                <div class="stat-value">
+                    00:48:35 
+                    <span class="stat-percent">(7.9%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Baño/descanso personal (No productivo)">
+            <div class="stat-icon" style="color: #e74c3c">🚽</div>
+            <div class="stat-details">
+                <div class="stat-name">Ocupado (Baño)</div>
+                <div class="stat-value">
+                    00:16:43 
+                    <span class="stat-percent">(2.7%)</span>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        
+        <div class="agent-footer">
+            <div class="footer-item">
+                <span class="footer-label">⏱️ Jornada útil:</span>
+                <span class="footer-value">10:14:21</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">📊 Productivo:</span>
+                <span class="footer-value">07:59:29</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+    <div class="agent-card">
+        <div class="agent-header">
+            <div class="agent-avatar">D</div>
+            <div class="agent-info">
+                <h4>Daniela Vela Gonzalez</h4>
+                <span class="productivity-badge bg-warning">Media</span>
+            </div>
+        </div>
+        
+        <div class="productivity-meter">
+            <div class="meter-label">
+                <strong>Productividad: 63.1%</strong>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: 63.07552169592581%"></div>
+            </div>
+            <div class="meter-details">
+                <small>
+                    📋 Adm: 00:30:26 | 
+                    🔄 Cola: 05:50:25
+                </small>
+            </div>
+            <div class="meter-note" style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Solo Admin y En cola son productivos
+            </div>
+        </div>
+        
+        <div class="agent-stats-grid">
+    
+        <div class="stat-item stat-item-productive" title="Disponible para llamadas (Productivo)">
+            <div class="stat-icon" style="color: #2ecc71">🔄</div>
+            <div class="stat-details">
+                <div class="stat-name">En la cola</div>
+                <div class="stat-value">
+                    05:50:25 
+                    <span class="stat-percent">(58.0%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Entrenamiento (No productivo)">
+            <div class="stat-icon" style="color: #9b59b6">🎓</div>
+            <div class="stat-details">
+                <div class="stat-name">Capacitación</div>
+                <div class="stat-value">
+                    01:36:53 
+                    <span class="stat-percent">(16.0%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Disponible fuera de cola (No productivo)">
+            <div class="stat-icon" style="color: #95a5a6">✅</div>
+            <div class="stat-details">
+                <div class="stat-name">Disponible</div>
+                <div class="stat-value">
+                    01:34:11 
+                    <span class="stat-percent">(15.6%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Tareas administrativas (Productivo)">
+            <div class="stat-icon" style="color: #3498db">📋</div>
+            <div class="stat-details">
+                <div class="stat-name">Administrativo</div>
+                <div class="stat-value">
+                    00:30:26 
+                    <span class="stat-percent">(5.0%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso para comer (No productivo)">
+            <div class="stat-icon" style="color: #e67e22">🍴</div>
+            <div class="stat-details">
+                <div class="stat-name">Comida</div>
+                <div class="stat-value">
+                    00:15:58 
+                    <span class="stat-percent">(2.6%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Baño/descanso personal (No productivo)">
+            <div class="stat-icon" style="color: #e74c3c">🚽</div>
+            <div class="stat-details">
+                <div class="stat-name">Ocupado (Baño)</div>
+                <div class="stat-value">
+                    00:15:54 
+                    <span class="stat-percent">(2.6%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Ausente">
+            <div class="stat-icon" style="color: #7f8c8d">📝</div>
+            <div class="stat-details">
+                <div class="stat-name">Ausente</div>
+                <div class="stat-value">
+                    00:00:01 
+                    <span class="stat-percent">(0.0%)</span>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        
+        <div class="agent-footer">
+            <div class="footer-item">
+                <span class="footer-label">⏱️ Jornada útil:</span>
+                <span class="footer-value">10:03:48</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">📊 Productivo:</span>
+                <span class="footer-value">06:20:51</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+    <div class="agent-card">
+        <div class="agent-header">
+            <div class="agent-avatar">G</div>
+            <div class="agent-info">
+                <h4>Gabriela Farfan Aguilar</h4>
+                <span class="productivity-badge bg-success">Alta</span>
+            </div>
+        </div>
+        
+        <div class="productivity-meter">
+            <div class="meter-label">
+                <strong>Productividad: 88.0%</strong>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: 88.00526157134637%"></div>
+            </div>
+            <div class="meter-details">
+                <small>
+                    📋 Adm: 06:56:32 | 
+                    🔄 Cola: 01:58:42
+                </small>
+            </div>
+            <div class="meter-note" style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Solo Admin y En cola son productivos
+            </div>
+        </div>
+        
+        <div class="agent-stats-grid">
+    
+        <div class="stat-item stat-item-productive" title="Tareas administrativas (Productivo)">
+            <div class="stat-icon" style="color: #3498db">📋</div>
+            <div class="stat-details">
+                <div class="stat-name">Administrativo</div>
+                <div class="stat-value">
+                    06:56:32 
+                    <span class="stat-percent">(68.5%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Disponible para llamadas (Productivo)">
+            <div class="stat-icon" style="color: #2ecc71">🔄</div>
+            <div class="stat-details">
+                <div class="stat-name">En la cola</div>
+                <div class="stat-value">
+                    01:58:42 
+                    <span class="stat-percent">(19.5%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso para comer (No productivo)">
+            <div class="stat-icon" style="color: #e67e22">🍴</div>
+            <div class="stat-details">
+                <div class="stat-name">Comida</div>
+                <div class="stat-value">
+                    00:46:48 
+                    <span class="stat-percent">(7.7%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Baño/descanso personal (No productivo)">
+            <div class="stat-icon" style="color: #e74c3c">🚽</div>
+            <div class="stat-details">
+                <div class="stat-name">Ocupado (Baño)</div>
+                <div class="stat-value">
+                    00:17:21 
+                    <span class="stat-percent">(2.9%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Disponible fuera de cola (No productivo)">
+            <div class="stat-icon" style="color: #95a5a6">✅</div>
+            <div class="stat-details">
+                <div class="stat-name">Disponible</div>
+                <div class="stat-value">
+                    00:08:48 
+                    <span class="stat-percent">(1.4%)</span>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        
+        <div class="agent-footer">
+            <div class="footer-item">
+                <span class="footer-label">⏱️ Jornada útil:</span>
+                <span class="footer-value">10:08:11</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">📊 Productivo:</span>
+                <span class="footer-value">08:55:14</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+    <div class="agent-card">
+        <div class="agent-header">
+            <div class="agent-avatar">I</div>
+            <div class="agent-info">
+                <h4>Itzel Cortes Martinez</h4>
+                <span class="productivity-badge bg-success">Alta</span>
+            </div>
+        </div>
+        
+        <div class="productivity-meter">
+            <div class="meter-label">
+                <strong>Productividad: 86.3%</strong>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: 86.26410456932186%"></div>
+            </div>
+            <div class="meter-details">
+                <small>
+                    📋 Adm: 01:21:04 | 
+                    🔄 Cola: 07:13:42
+                </small>
+            </div>
+            <div class="meter-note" style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Solo Admin y En cola son productivos
+            </div>
+        </div>
+        
+        <div class="agent-stats-grid">
+    
+        <div class="stat-item stat-item-productive" title="Disponible para llamadas (Productivo)">
+            <div class="stat-icon" style="color: #2ecc71">🔄</div>
+            <div class="stat-details">
+                <div class="stat-name">En la cola</div>
+                <div class="stat-value">
+                    07:13:42 
+                    <span class="stat-percent">(72.7%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Tareas administrativas (Productivo)">
+            <div class="stat-icon" style="color: #3498db">📋</div>
+            <div class="stat-details">
+                <div class="stat-name">Administrativo</div>
+                <div class="stat-value">
+                    01:21:04 
+                    <span class="stat-percent">(13.6%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso para comer (No productivo)">
+            <div class="stat-icon" style="color: #e67e22">🍴</div>
+            <div class="stat-details">
+                <div class="stat-name">Comida</div>
+                <div class="stat-value">
+                    00:46:20 
+                    <span class="stat-percent">(7.8%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Baño/descanso personal (No productivo)">
+            <div class="stat-icon" style="color: #e74c3c">🚽</div>
+            <div class="stat-details">
+                <div class="stat-name">Ocupado (Baño)</div>
+                <div class="stat-value">
+                    00:27:30 
+                    <span class="stat-percent">(4.6%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Disponible fuera de cola (No productivo)">
+            <div class="stat-icon" style="color: #95a5a6">✅</div>
+            <div class="stat-details">
+                <div class="stat-name">Disponible</div>
+                <div class="stat-value">
+                    00:08:08 
+                    <span class="stat-percent">(1.4%)</span>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        
+        <div class="agent-footer">
+            <div class="footer-item">
+                <span class="footer-label">⏱️ Jornada útil:</span>
+                <span class="footer-value">09:56:44</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">📊 Productivo:</span>
+                <span class="footer-value">08:34:46</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+    <div class="agent-card">
+        <div class="agent-header">
+            <div class="agent-avatar">J</div>
+            <div class="agent-info">
+                <h4>Jan Carlo Franco Orejas</h4>
+                <span class="productivity-badge bg-success">Alta</span>
+            </div>
+        </div>
+        
+        <div class="productivity-meter">
+            <div class="meter-label">
+                <strong>Productividad: 81.0%</strong>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: 81.03052461525381%"></div>
+            </div>
+            <div class="meter-details">
+                <small>
+                    📋 Adm: 03:27:24 | 
+                    🔄 Cola: 04:29:06
+                </small>
+            </div>
+            <div class="meter-note" style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Solo Admin y En cola son productivos
+            </div>
+        </div>
+        
+        <div class="agent-stats-grid">
+    
+        <div class="stat-item stat-item-productive" title="Disponible para llamadas (Productivo)">
+            <div class="stat-icon" style="color: #2ecc71">🔄</div>
+            <div class="stat-details">
+                <div class="stat-name">En la cola</div>
+                <div class="stat-value">
+                    04:29:06 
+                    <span class="stat-percent">(45.8%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Tareas administrativas (Productivo)">
+            <div class="stat-icon" style="color: #3498db">📋</div>
+            <div class="stat-details">
+                <div class="stat-name">Administrativo</div>
+                <div class="stat-value">
+                    03:27:24 
+                    <span class="stat-percent">(35.3%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Disponible fuera de cola (No productivo)">
+            <div class="stat-icon" style="color: #95a5a6">✅</div>
+            <div class="stat-details">
+                <div class="stat-name">Disponible</div>
+                <div class="stat-value">
+                    01:00:58 
+                    <span class="stat-percent">(10.4%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Baño/descanso personal (No productivo)">
+            <div class="stat-icon" style="color: #e74c3c">🚽</div>
+            <div class="stat-details">
+                <div class="stat-name">Ocupado (Baño)</div>
+                <div class="stat-value">
+                    00:34:53 
+                    <span class="stat-percent">(5.9%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso para comer (No productivo)">
+            <div class="stat-icon" style="color: #e67e22">🍴</div>
+            <div class="stat-details">
+                <div class="stat-name">Comida</div>
+                <div class="stat-value">
+                    00:15:41 
+                    <span class="stat-percent">(2.7%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Entrenamiento (No productivo)">
+            <div class="stat-icon" style="color: #9b59b6">🎓</div>
+            <div class="stat-details">
+                <div class="stat-name">Capacitación</div>
+                <div class="stat-value">
+                    00:00:01 
+                    <span class="stat-percent">(0.0%)</span>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        
+        <div class="agent-footer">
+            <div class="footer-item">
+                <span class="footer-label">⏱️ Jornada útil:</span>
+                <span class="footer-value">09:48:03</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">📊 Productivo:</span>
+                <span class="footer-value">07:56:30</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+    <div class="agent-card">
+        <div class="agent-header">
+            <div class="agent-avatar">J</div>
+            <div class="agent-info">
+                <h4>Javier Flores Medina</h4>
+                <span class="productivity-badge bg-success">Alta</span>
+            </div>
+        </div>
+        
+        <div class="productivity-meter">
+            <div class="meter-label">
+                <strong>Productividad: 86.4%</strong>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: 86.44245184284219%"></div>
+            </div>
+            <div class="meter-details">
+                <small>
+                    📋 Adm: 04:12:14 | 
+                    🔄 Cola: 04:17:06
+                </small>
+            </div>
+            <div class="meter-note" style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Solo Admin y En cola son productivos
+            </div>
+        </div>
+        
+        <div class="agent-stats-grid">
+    
+        <div class="stat-item stat-item-productive" title="Disponible para llamadas (Productivo)">
+            <div class="stat-icon" style="color: #2ecc71">🔄</div>
+            <div class="stat-details">
+                <div class="stat-name">En la cola</div>
+                <div class="stat-value">
+                    04:17:06 
+                    <span class="stat-percent">(43.6%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Tareas administrativas (Productivo)">
+            <div class="stat-icon" style="color: #3498db">📋</div>
+            <div class="stat-details">
+                <div class="stat-name">Administrativo</div>
+                <div class="stat-value">
+                    04:12:14 
+                    <span class="stat-percent">(42.8%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso para comer (No productivo)">
+            <div class="stat-icon" style="color: #e67e22">🍴</div>
+            <div class="stat-details">
+                <div class="stat-name">Comida</div>
+                <div class="stat-value">
+                    00:47:05 
+                    <span class="stat-percent">(8.0%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Disponible fuera de cola (No productivo)">
+            <div class="stat-icon" style="color: #95a5a6">✅</div>
+            <div class="stat-details">
+                <div class="stat-name">Disponible</div>
+                <div class="stat-value">
+                    00:20:30 
+                    <span class="stat-percent">(3.5%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Baño/descanso personal (No productivo)">
+            <div class="stat-icon" style="color: #e74c3c">🚽</div>
+            <div class="stat-details">
+                <div class="stat-name">Ocupado (Baño)</div>
+                <div class="stat-value">
+                    00:12:18 
+                    <span class="stat-percent">(2.1%)</span>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        
+        <div class="agent-footer">
+            <div class="footer-item">
+                <span class="footer-label">⏱️ Jornada útil:</span>
+                <span class="footer-value">09:49:13</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">📊 Productivo:</span>
+                <span class="footer-value">08:29:20</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+    <div class="agent-card">
+        <div class="agent-header">
+            <div class="agent-avatar">J</div>
+            <div class="agent-info">
+                <h4>Jorge Omar Villamar Juárez</h4>
+                <span class="productivity-badge bg-warning">Media</span>
+            </div>
+        </div>
+        
+        <div class="productivity-meter">
+            <div class="meter-label">
+                <strong>Productividad: 76.0%</strong>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: 76.00576474917209%"></div>
+            </div>
+            <div class="meter-details">
+                <small>
+                    📋 Adm: 03:31:08 | 
+                    🔄 Cola: 03:21:59
+                </small>
+            </div>
+            <div class="meter-note" style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Solo Admin y En cola son productivos
+            </div>
+        </div>
+        
+        <div class="agent-stats-grid">
+    
+        <div class="stat-item stat-item-productive" title="Tareas administrativas (Productivo)">
+            <div class="stat-icon" style="color: #3498db">📋</div>
+            <div class="stat-details">
+                <div class="stat-name">Administrativo</div>
+                <div class="stat-value">
+                    03:31:08 
+                    <span class="stat-percent">(38.8%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Disponible para llamadas (Productivo)">
+            <div class="stat-icon" style="color: #2ecc71">🔄</div>
+            <div class="stat-details">
+                <div class="stat-name">En la cola</div>
+                <div class="stat-value">
+                    03:21:59 
+                    <span class="stat-percent">(37.2%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Disponible fuera de cola (No productivo)">
+            <div class="stat-icon" style="color: #95a5a6">✅</div>
+            <div class="stat-details">
+                <div class="stat-name">Disponible</div>
+                <div class="stat-value">
+                    01:09:26 
+                    <span class="stat-percent">(12.8%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso para comer (No productivo)">
+            <div class="stat-icon" style="color: #e67e22">🍴</div>
+            <div class="stat-details">
+                <div class="stat-name">Comida</div>
+                <div class="stat-value">
+                    00:48:34 
+                    <span class="stat-percent">(8.9%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Baño/descanso personal (No productivo)">
+            <div class="stat-icon" style="color: #e74c3c">🚽</div>
+            <div class="stat-details">
+                <div class="stat-name">Ocupado (Baño)</div>
+                <div class="stat-value">
+                    00:12:25 
+                    <span class="stat-percent">(2.3%)</span>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        
+        <div class="agent-footer">
+            <div class="footer-item">
+                <span class="footer-label">⏱️ Jornada útil:</span>
+                <span class="footer-value">09:03:32</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">📊 Productivo:</span>
+                <span class="footer-value">06:53:07</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+    <div class="agent-card">
+        <div class="agent-header">
+            <div class="agent-avatar">J</div>
+            <div class="agent-info">
+                <h4>Jose Carlos Hernandez Baltierrez</h4>
+                <span class="productivity-badge bg-danger">Baja</span>
+            </div>
+        </div>
+        
+        <div class="productivity-meter">
+            <div class="meter-label">
+                <strong>Productividad: 44.7%</strong>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: 44.72026035175183%"></div>
+            </div>
+            <div class="meter-details">
+                <small>
+                    📋 Adm: 01:31:37 | 
+                    🔄 Cola: 02:03:40
+                </small>
+            </div>
+            <div class="meter-note" style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Solo Admin y En cola son productivos
+            </div>
+        </div>
+        
+        <div class="agent-stats-grid">
+    
+        <div class="stat-item " title="Disponible fuera de cola (No productivo)">
+            <div class="stat-icon" style="color: #95a5a6">✅</div>
+            <div class="stat-details">
+                <div class="stat-name">Disponible</div>
+                <div class="stat-value">
+                    02:14:21 
+                    <span class="stat-percent">(27.9%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Disponible para llamadas (Productivo)">
+            <div class="stat-icon" style="color: #2ecc71">🔄</div>
+            <div class="stat-details">
+                <div class="stat-name">En la cola</div>
+                <div class="stat-value">
+                    02:03:40 
+                    <span class="stat-percent">(25.7%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Tareas administrativas (Productivo)">
+            <div class="stat-icon" style="color: #3498db">📋</div>
+            <div class="stat-details">
+                <div class="stat-name">Administrativo</div>
+                <div class="stat-value">
+                    01:31:37 
+                    <span class="stat-percent">(19.0%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Entrenamiento (No productivo)">
+            <div class="stat-icon" style="color: #9b59b6">🎓</div>
+            <div class="stat-details">
+                <div class="stat-name">Capacitación</div>
+                <div class="stat-value">
+                    01:11:28 
+                    <span class="stat-percent">(14.8%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso para comer (No productivo)">
+            <div class="stat-icon" style="color: #e67e22">🍴</div>
+            <div class="stat-details">
+                <div class="stat-name">Comida</div>
+                <div class="stat-value">
+                    00:46:00 
+                    <span class="stat-percent">(9.6%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Baño/descanso personal (No productivo)">
+            <div class="stat-icon" style="color: #e74c3c">🚽</div>
+            <div class="stat-details">
+                <div class="stat-name">Ocupado (Baño)</div>
+                <div class="stat-value">
+                    00:14:18 
+                    <span class="stat-percent">(3.0%)</span>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        
+        <div class="agent-footer">
+            <div class="footer-item">
+                <span class="footer-label">⏱️ Jornada útil:</span>
+                <span class="footer-value">08:01:24</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">📊 Productivo:</span>
+                <span class="footer-value">03:35:17</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+    <div class="agent-card">
+        <div class="agent-header">
+            <div class="agent-avatar">K</div>
+            <div class="agent-info">
+                <h4>Kristal Escobar Diaz</h4>
+                <span class="productivity-badge bg-success">Alta</span>
+            </div>
+        </div>
+        
+        <div class="productivity-meter">
+            <div class="meter-label">
+                <strong>Productividad: 89.3%</strong>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: 89.26011016691118%"></div>
+            </div>
+            <div class="meter-details">
+                <small>
+                    📋 Adm: 08:48:25 | 
+                    🔄 Cola: 00:09:02
+                </small>
+            </div>
+            <div class="meter-note" style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Solo Admin y En cola son productivos
+            </div>
+        </div>
+        
+        <div class="agent-stats-grid">
+    
+        <div class="stat-item stat-item-productive" title="Tareas administrativas (Productivo)">
+            <div class="stat-icon" style="color: #3498db">📋</div>
+            <div class="stat-details">
+                <div class="stat-name">Administrativo</div>
+                <div class="stat-value">
+                    08:48:25 
+                    <span class="stat-percent">(87.8%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso para comer (No productivo)">
+            <div class="stat-icon" style="color: #e67e22">🍴</div>
+            <div class="stat-details">
+                <div class="stat-name">Comida</div>
+                <div class="stat-value">
+                    00:45:05 
+                    <span class="stat-percent">(7.5%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Baño/descanso personal (No productivo)">
+            <div class="stat-icon" style="color: #e74c3c">🚽</div>
+            <div class="stat-details">
+                <div class="stat-name">Ocupado (Baño)</div>
+                <div class="stat-value">
+                    00:14:39 
+                    <span class="stat-percent">(2.4%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Disponible para llamadas (Productivo)">
+            <div class="stat-icon" style="color: #2ecc71">🔄</div>
+            <div class="stat-details">
+                <div class="stat-name">En la cola</div>
+                <div class="stat-value">
+                    00:09:02 
+                    <span class="stat-percent">(1.5%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Disponible fuera de cola (No productivo)">
+            <div class="stat-icon" style="color: #95a5a6">✅</div>
+            <div class="stat-details">
+                <div class="stat-name">Disponible</div>
+                <div class="stat-value">
+                    00:04:56 
+                    <span class="stat-percent">(0.8%)</span>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        
+        <div class="agent-footer">
+            <div class="footer-item">
+                <span class="footer-label">⏱️ Jornada útil:</span>
+                <span class="footer-value">10:02:07</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">📊 Productivo:</span>
+                <span class="footer-value">08:57:27</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+    <div class="agent-card">
+        <div class="agent-header">
+            <div class="agent-avatar">M</div>
+            <div class="agent-info">
+                <h4>Marisela Sánchez Herrera</h4>
+                <span class="productivity-badge bg-danger">Baja</span>
+            </div>
+        </div>
+        
+        <div class="productivity-meter">
+            <div class="meter-label">
+                <strong>Productividad: 13.4%</strong>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: 13.36489045171761%"></div>
+            </div>
+            <div class="meter-details">
+                <small>
+                    📋 Adm: 00:00:00 | 
+                    🔄 Cola: 01:22:21
+                </small>
+            </div>
+            <div class="meter-note" style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Solo Admin y En cola son productivos
+            </div>
+        </div>
+        
+        <div class="agent-stats-grid">
+    
+        <div class="stat-item " title="Disponible fuera de cola (No productivo)">
+            <div class="stat-icon" style="color: #95a5a6">✅</div>
+            <div class="stat-details">
+                <div class="stat-name">Disponible</div>
+                <div class="stat-value">
+                    08:24:52 
+                    <span class="stat-percent">(81.9%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Disponible para llamadas (Productivo)">
+            <div class="stat-icon" style="color: #2ecc71">🔄</div>
+            <div class="stat-details">
+                <div class="stat-name">En la cola</div>
+                <div class="stat-value">
+                    01:22:21 
+                    <span class="stat-percent">(13.4%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso para comer (No productivo)">
+            <div class="stat-icon" style="color: #e67e22">🍴</div>
+            <div class="stat-details">
+                <div class="stat-name">Comida</div>
+                <div class="stat-value">
+                    00:20:35 
+                    <span class="stat-percent">(3.3%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Baño/descanso personal (No productivo)">
+            <div class="stat-icon" style="color: #e74c3c">🚽</div>
+            <div class="stat-details">
+                <div class="stat-name">Ocupado (Baño)</div>
+                <div class="stat-value">
+                    00:08:22 
+                    <span class="stat-percent">(1.4%)</span>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        
+        <div class="agent-footer">
+            <div class="footer-item">
+                <span class="footer-label">⏱️ Jornada útil:</span>
+                <span class="footer-value">10:16:10</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">📊 Productivo:</span>
+                <span class="footer-value">01:22:21</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+    <div class="agent-card">
+        <div class="agent-header">
+            <div class="agent-avatar">M</div>
+            <div class="agent-info">
+                <h4>Michel Alberto Loma Cerda</h4>
+                <span class="productivity-badge bg-success">Alta</span>
+            </div>
+        </div>
+        
+        <div class="productivity-meter">
+            <div class="meter-label">
+                <strong>Productividad: 81.9%</strong>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: 81.86352863363281%"></div>
+            </div>
+            <div class="meter-details">
+                <small>
+                    📋 Adm: 01:59:19 | 
+                    🔄 Cola: 06:15:46
+                </small>
+            </div>
+            <div class="meter-note" style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Solo Admin y En cola son productivos
+            </div>
+        </div>
+        
+        <div class="agent-stats-grid">
+    
+        <div class="stat-item stat-item-productive" title="Disponible para llamadas (Productivo)">
+            <div class="stat-icon" style="color: #2ecc71">🔄</div>
+            <div class="stat-details">
+                <div class="stat-name">En la cola</div>
+                <div class="stat-value">
+                    06:15:46 
+                    <span class="stat-percent">(62.1%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Tareas administrativas (Productivo)">
+            <div class="stat-icon" style="color: #3498db">📋</div>
+            <div class="stat-details">
+                <div class="stat-name">Administrativo</div>
+                <div class="stat-value">
+                    01:59:19 
+                    <span class="stat-percent">(19.7%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso para comer (No productivo)">
+            <div class="stat-icon" style="color: #e67e22">🍴</div>
+            <div class="stat-details">
+                <div class="stat-name">Comida</div>
+                <div class="stat-value">
+                    00:43:59 
+                    <span class="stat-percent">(7.3%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Disponible fuera de cola (No productivo)">
+            <div class="stat-icon" style="color: #95a5a6">✅</div>
+            <div class="stat-details">
+                <div class="stat-name">Disponible</div>
+                <div class="stat-value">
+                    00:40:09 
+                    <span class="stat-percent">(6.6%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Baño/descanso personal (No productivo)">
+            <div class="stat-icon" style="color: #e74c3c">🚽</div>
+            <div class="stat-details">
+                <div class="stat-name">Ocupado (Baño)</div>
+                <div class="stat-value">
+                    00:25:29 
+                    <span class="stat-percent">(4.2%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso">
+            <div class="stat-icon" style="color: #7f8c8d">📝</div>
+            <div class="stat-details">
+                <div class="stat-name">Descanso</div>
+                <div class="stat-value">
+                    00:00:04 
+                    <span class="stat-percent">(0.0%)</span>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        
+        <div class="agent-footer">
+            <div class="footer-item">
+                <span class="footer-label">⏱️ Jornada útil:</span>
+                <span class="footer-value">10:04:46</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">📊 Productivo:</span>
+                <span class="footer-value">08:15:05</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+    <div class="agent-card">
+        <div class="agent-header">
+            <div class="agent-avatar">N</div>
+            <div class="agent-info">
+                <h4>Nelly Abascal Gomeztagle</h4>
+                <span class="productivity-badge bg-warning">Media</span>
+            </div>
+        </div>
+        
+        <div class="productivity-meter">
+            <div class="meter-label">
+                <strong>Productividad: 79.8%</strong>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: 79.84040545640805%"></div>
+            </div>
+            <div class="meter-details">
+                <small>
+                    📋 Adm: 02:05:44 | 
+                    🔄 Cola: 06:07:52
+                </small>
+            </div>
+            <div class="meter-note" style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Solo Admin y En cola son productivos
+            </div>
+        </div>
+        
+        <div class="agent-stats-grid">
+    
+        <div class="stat-item stat-item-productive" title="Disponible para llamadas (Productivo)">
+            <div class="stat-icon" style="color: #2ecc71">🔄</div>
+            <div class="stat-details">
+                <div class="stat-name">En la cola</div>
+                <div class="stat-value">
+                    06:07:52 
+                    <span class="stat-percent">(59.5%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Tareas administrativas (Productivo)">
+            <div class="stat-icon" style="color: #3498db">📋</div>
+            <div class="stat-details">
+                <div class="stat-name">Administrativo</div>
+                <div class="stat-value">
+                    02:05:44 
+                    <span class="stat-percent">(20.3%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso para comer (No productivo)">
+            <div class="stat-icon" style="color: #e67e22">🍴</div>
+            <div class="stat-details">
+                <div class="stat-name">Comida</div>
+                <div class="stat-value">
+                    00:53:06 
+                    <span class="stat-percent">(8.6%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Entrenamiento (No productivo)">
+            <div class="stat-icon" style="color: #9b59b6">🎓</div>
+            <div class="stat-details">
+                <div class="stat-name">Capacitación</div>
+                <div class="stat-value">
+                    00:30:57 
+                    <span class="stat-percent">(5.0%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Disponible fuera de cola (No productivo)">
+            <div class="stat-icon" style="color: #95a5a6">✅</div>
+            <div class="stat-details">
+                <div class="stat-name">Disponible</div>
+                <div class="stat-value">
+                    00:23:51 
+                    <span class="stat-percent">(3.9%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Baño/descanso personal (No productivo)">
+            <div class="stat-icon" style="color: #e74c3c">🚽</div>
+            <div class="stat-details">
+                <div class="stat-name">Ocupado (Baño)</div>
+                <div class="stat-value">
+                    00:16:44 
+                    <span class="stat-percent">(2.7%)</span>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        
+        <div class="agent-footer">
+            <div class="footer-item">
+                <span class="footer-label">⏱️ Jornada útil:</span>
+                <span class="footer-value">10:18:14</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">📊 Productivo:</span>
+                <span class="footer-value">08:13:36</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+    <div class="agent-card">
+        <div class="agent-header">
+            <div class="agent-avatar">N</div>
+            <div class="agent-info">
+                <h4>Noemi Rosas Hernandez</h4>
+                <span class="productivity-badge bg-warning">Media</span>
+            </div>
+        </div>
+        
+        <div class="productivity-meter">
+            <div class="meter-label">
+                <strong>Productividad: 77.8%</strong>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: 77.77380493976567%"></div>
+            </div>
+            <div class="meter-details">
+                <small>
+                    📋 Adm: 02:42:29 | 
+                    🔄 Cola: 05:08:48
+                </small>
+            </div>
+            <div class="meter-note" style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Solo Admin y En cola son productivos
+            </div>
+        </div>
+        
+        <div class="agent-stats-grid">
+    
+        <div class="stat-item stat-item-productive" title="Disponible para llamadas (Productivo)">
+            <div class="stat-icon" style="color: #2ecc71">🔄</div>
+            <div class="stat-details">
+                <div class="stat-name">En la cola</div>
+                <div class="stat-value">
+                    05:08:48 
+                    <span class="stat-percent">(51.0%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Tareas administrativas (Productivo)">
+            <div class="stat-icon" style="color: #3498db">📋</div>
+            <div class="stat-details">
+                <div class="stat-name">Administrativo</div>
+                <div class="stat-value">
+                    02:42:29 
+                    <span class="stat-percent">(26.8%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Disponible fuera de cola (No productivo)">
+            <div class="stat-icon" style="color: #95a5a6">✅</div>
+            <div class="stat-details">
+                <div class="stat-name">Disponible</div>
+                <div class="stat-value">
+                    01:09:37 
+                    <span class="stat-percent">(11.5%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso para comer (No productivo)">
+            <div class="stat-icon" style="color: #e67e22">🍴</div>
+            <div class="stat-details">
+                <div class="stat-name">Comida</div>
+                <div class="stat-value">
+                    00:48:10 
+                    <span class="stat-percent">(7.9%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Entrenamiento (No productivo)">
+            <div class="stat-icon" style="color: #9b59b6">🎓</div>
+            <div class="stat-details">
+                <div class="stat-name">Capacitación</div>
+                <div class="stat-value">
+                    00:09:58 
+                    <span class="stat-percent">(1.6%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Baño/descanso personal (No productivo)">
+            <div class="stat-icon" style="color: #e74c3c">🚽</div>
+            <div class="stat-details">
+                <div class="stat-name">Ocupado (Baño)</div>
+                <div class="stat-value">
+                    00:06:56 
+                    <span class="stat-percent">(1.1%)</span>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        
+        <div class="agent-footer">
+            <div class="footer-item">
+                <span class="footer-label">⏱️ Jornada útil:</span>
+                <span class="footer-value">10:05:58</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">📊 Productivo:</span>
+                <span class="footer-value">07:51:17</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+    <div class="agent-card">
+        <div class="agent-header">
+            <div class="agent-avatar">N</div>
+            <div class="agent-info">
+                <h4>Nohemi Damian Guzman</h4>
+                <span class="productivity-badge bg-danger">Baja</span>
+            </div>
+        </div>
+        
+        <div class="productivity-meter">
+            <div class="meter-label">
+                <strong>Productividad: 0.8%</strong>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: 0.7693368261409073%"></div>
+            </div>
+            <div class="meter-details">
+                <small>
+                    📋 Adm: 00:00:00 | 
+                    🔄 Cola: 00:04:39
+                </small>
+            </div>
+            <div class="meter-note" style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Solo Admin y En cola son productivos
+            </div>
+        </div>
+        
+        <div class="agent-stats-grid">
+    
+        <div class="stat-item " title="Entrenamiento (No productivo)">
+            <div class="stat-icon" style="color: #9b59b6">🎓</div>
+            <div class="stat-details">
+                <div class="stat-name">Capacitación</div>
+                <div class="stat-value">
+                    08:35:49 
+                    <span class="stat-percent">(85.3%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso para comer (No productivo)">
+            <div class="stat-icon" style="color: #e67e22">🍴</div>
+            <div class="stat-details">
+                <div class="stat-name">Comida</div>
+                <div class="stat-value">
+                    00:45:10 
+                    <span class="stat-percent">(7.5%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Baño/descanso personal (No productivo)">
+            <div class="stat-icon" style="color: #e74c3c">🚽</div>
+            <div class="stat-details">
+                <div class="stat-name">Ocupado (Baño)</div>
+                <div class="stat-value">
+                    00:24:06 
+                    <span class="stat-percent">(4.0%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Disponible fuera de cola (No productivo)">
+            <div class="stat-icon" style="color: #95a5a6">✅</div>
+            <div class="stat-details">
+                <div class="stat-name">Disponible</div>
+                <div class="stat-value">
+                    00:14:41 
+                    <span class="stat-percent">(2.4%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Disponible para llamadas (Productivo)">
+            <div class="stat-icon" style="color: #2ecc71">🔄</div>
+            <div class="stat-details">
+                <div class="stat-name">En la cola</div>
+                <div class="stat-value">
+                    00:04:39 
+                    <span class="stat-percent">(0.8%)</span>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        
+        <div class="agent-footer">
+            <div class="footer-item">
+                <span class="footer-label">⏱️ Jornada útil:</span>
+                <span class="footer-value">10:04:25</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">📊 Productivo:</span>
+                <span class="footer-value">00:04:39</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+    <div class="agent-card">
+        <div class="agent-header">
+            <div class="agent-avatar">V</div>
+            <div class="agent-info">
+                <h4>Victor Alfonso Martinez Frias</h4>
+                <span class="productivity-badge bg-danger">Baja</span>
+            </div>
+        </div>
+        
+        <div class="productivity-meter">
+            <div class="meter-label">
+                <strong>Productividad: 50.6%</strong>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: 50.612930773256934%"></div>
+            </div>
+            <div class="meter-details">
+                <small>
+                    📋 Adm: 01:53:15 | 
+                    🔄 Cola: 03:12:58
+                </small>
+            </div>
+            <div class="meter-note" style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Solo Admin y En cola son productivos
+            </div>
+        </div>
+        
+        <div class="agent-stats-grid">
+    
+        <div class="stat-item stat-item-productive" title="Disponible para llamadas (Productivo)">
+            <div class="stat-icon" style="color: #2ecc71">🔄</div>
+            <div class="stat-details">
+                <div class="stat-name">En la cola</div>
+                <div class="stat-value">
+                    03:12:58 
+                    <span class="stat-percent">(31.9%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Disponible fuera de cola (No productivo)">
+            <div class="stat-icon" style="color: #95a5a6">✅</div>
+            <div class="stat-details">
+                <div class="stat-name">Disponible</div>
+                <div class="stat-value">
+                    02:49:58 
+                    <span class="stat-percent">(28.1%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item stat-item-productive" title="Tareas administrativas (Productivo)">
+            <div class="stat-icon" style="color: #3498db">📋</div>
+            <div class="stat-details">
+                <div class="stat-name">Administrativo</div>
+                <div class="stat-value">
+                    01:53:15 
+                    <span class="stat-percent">(18.7%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Entrenamiento (No productivo)">
+            <div class="stat-icon" style="color: #9b59b6">🎓</div>
+            <div class="stat-details">
+                <div class="stat-name">Capacitación</div>
+                <div class="stat-value">
+                    00:58:58 
+                    <span class="stat-percent">(9.7%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Descanso para comer (No productivo)">
+            <div class="stat-icon" style="color: #e67e22">🍴</div>
+            <div class="stat-details">
+                <div class="stat-name">Comida</div>
+                <div class="stat-value">
+                    00:39:47 
+                    <span class="stat-percent">(6.6%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-item " title="Baño/descanso personal (No productivo)">
+            <div class="stat-icon" style="color: #e74c3c">🚽</div>
+            <div class="stat-details">
+                <div class="stat-name">Ocupado (Baño)</div>
+                <div class="stat-value">
+                    00:30:05 
+                    <span class="stat-percent">(5.0%)</span>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        
+        <div class="agent-footer">
+            <div class="footer-item">
+                <span class="footer-label">⏱️ Jornada útil:</span>
+                <span class="footer-value">10:05:01</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">📊 Productivo:</span>
+                <span class="footer-value">05:06:13</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">×</span>
+            <div class="modal-header">
+                <h3><i class="fas fa-phone-slash"></i> <span id="modal-title">Detalles de Llamadas Abandonadas</span></h3>
+            </div>
+            <div id="modal-body" class="call-details-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        const abandonadas = [{"Hora": 10, "Aptitudes": "884 CONCIERGE", "Usuarios": "Nelly Abascal Gomeztagle", "Conclusión": NaN}, {"Hora": 11, "Aptitudes": "901 Concierge MH", "Usuarios": "Jan Carlo Franco Orejas", "Conclusión": NaN}, {"Hora": 13, "Aptitudes": "818 Reenvio de Kits - Transfer; 901 Concierge MH", "Usuarios": "Daniela Vela Gonzalez", "Conclusión": "Información Medicall Home"}, {"Hora": 14, "Aptitudes": "884 CONCIERGE", "Usuarios": "Michel Alberto Loma Cerda", "Conclusión": NaN}, {"Hora": 16, "Aptitudes": "3 Referencias Medicas", "Usuarios": NaN, "Conclusión": NaN}, {"Hora": 19, "Aptitudes": "884 CONCIERGE", "Usuarios": NaN, "Conclusión": NaN}, {"Hora": 19, "Aptitudes": "901 Concierge MH", "Usuarios": NaN, "Conclusión": NaN}];
+
+        function cerrarModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function mostrarAbandonadasGeneral() {
+            mostrarAbandonadas(abandonadas, 'Todas las llamadas abandonadas');
+        }
+
+        function mostrarAbandonadasPorHora(hora) {
+            const filtradas = abandonadas.filter(item => {
+                const itemHora = parseInt(item.Hora);
+                const horaBuscar = parseInt(hora);
+                return itemHora === horaBuscar;
+            });
+            mostrarAbandonadas(filtradas, `Llamadas abandonadas a las ${hora}:00`);
+        }
+
+        function mostrarAbandonadas(lista, titulo) {
+            const body = document.getElementById('modal-body');
+            const title = document.getElementById('modal-title');
+            title.textContent = titulo;
+
+            if (!lista || lista.length === 0) {
+                body.innerHTML = '<p style="text-align: center; padding: 40px; color: #666; font-style: italic;">No hay llamadas abandonadas en este periodo.</p>';
+            } else {
+                let html = '';
+                lista.forEach((item, index) => {
+                    html += `
+                        <div class="call-detail-card">
+                            <div class="call-detail-item">
+                                <span class="call-detail-label">Hora:</span>
+                                <span class="call-detail-value">${item.Hora || 'N/A'}:00</span>
+                            </div>
+                            <div class="call-detail-item">
+                                <span class="call-detail-label">Aptitud:</span>
+                                <span class="call-detail-value">${item.Aptitudes || 'No especificada'}</span>
+                            </div>
+                            <div class="call-detail-item">
+                                <span class="call-detail-label">Usuario:</span>
+                                <span class="call-detail-value">${item.Usuarios || 'No especificado'}</span>
+                            </div>
+                            <div class="call-detail-item">
+                                <span class="call-detail-label">Conclusión:</span>
+                                <span class="call-detail-value">${item['Conclusión'] || 'Sin conclusión'}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                body.innerHTML = html;
+            }
+
+            document.getElementById('modal').style.display = 'block';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            if (event.target === modal) {
+                cerrarModal();
+            }
+        }
+
+        // Gráficos
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gráfico de pastel
+            const pieCtx = document.getElementById('pieChart').getContext('2d');
+            const pieChart = new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Atendidas', 'Abandonadas'],
+                    datasets: [{
+                        data: [119, 7],
+                        backgroundColor: ['#2ecc71', '#e74c3c'],
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        hoverOffset: 15
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 13 },
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+
+            // Gráfico de barras
+            const barLabels = ["8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19"];
+            const barCtx = document.getElementById('barChart');
+            
+            const barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: barLabels,
+                    datasets: [
+                        {
+                            label: 'Entrantes',
+                            data: [2, 10, 12, 20, 12, 16, 12, 4, 13, 12, 8, 5],
+                            backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                            borderColor: 'rgba(52, 152, 219, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Contestadas',
+                            data: [2, 10, 11, 19, 12, 15, 11, 4, 12, 12, 8, 3],
+                            backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                            borderColor: 'rgba(46, 204, 113, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Abandonadas',
+                            data: [0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 2],
+                            backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                            borderColor: 'rgba(231, 76, 60, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: { size: 13 },
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            },
+                            ticks: {
+                                font: { size: 12 }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Cantidad',
+                                font: { size: 14, weight: 'bold' }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: { size: 12 }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Hora del día',
+                                font: { size: 14, weight: 'bold' }
+                            }
+                        }
+                    }
+                }
+            });
+
+            window.addEventListener('resize', function() {
+                pieChart.resize();
+                barChart.resize();
+            });
+        });
+    </script>
+
+
+</body></html>
